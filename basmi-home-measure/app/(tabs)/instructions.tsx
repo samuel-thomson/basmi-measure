@@ -1,5 +1,9 @@
 import { Text, View, StyleSheet } from "react-native";
 
+/*
+    Simple page to explain the manual measurement techniques.
+*/
+
 export default function AboutScreen() {
     return (
         <View style={styles.container}>

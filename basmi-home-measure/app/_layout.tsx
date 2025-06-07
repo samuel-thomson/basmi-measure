@@ -1,5 +1,10 @@
 import { Stack } from "expo-router";
 
+/*
+    Routes the pages
+*/
+
+
 export default function RootLayout() {
   return (
       <Stack

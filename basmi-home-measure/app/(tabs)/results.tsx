@@ -5,6 +5,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from "react";
 import { useFocusEffect } from '@react-navigation/native';
 
+/*
+    Results page menu updates when a new BASMI measurement is taken.
+*/
 
 export default function Index() {
     const [results, setResults] = useState<number[]>(Array(13).fill(0));

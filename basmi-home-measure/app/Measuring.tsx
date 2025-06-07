@@ -7,6 +7,10 @@ import { useRef } from "react";
 import { useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+/*
+    Measuring tab
+*/
+
 
 export default function MeasureScreen() {
     const { value } = useLocalSearchParams();
@@ -28,6 +32,10 @@ export default function MeasureScreen() {
             console.error(error);
         }
     }
+
+    /*
+        Arrays to change the content and paths based on parameter value from the index page.
+    */
 
     const instructions: string[] = [
         "Patient stands with back to wall, their knees straight and shoulder blades, buttocks, and heels against the wall. Feet should be hip width apart and parallel. With head in neutral position, patient draws chin in as far as possible. Take a full body photo of the patient from their left side.",
@@ -75,7 +83,15 @@ export default function MeasureScreen() {
         "intermalleolar"
     ]
 
+    /*
+        Sets the instruction message displayed at the bottom of the screen
+    */
+
     const [message, setMessage] = useState<string>(instructions[index]);
+
+    /*
+        Sets up camera flex box.
+    */
 
     console.log("Index", index);
     if (!permission) {
@@ -96,6 +112,10 @@ export default function MeasureScreen() {
     function toggleCameraFacing() {
         setFacing(current => (current === 'back' ? 'front' : 'back'));
     }
+
+    /*
+        Takes a photo and sends the image data to the FastAPI server - handles measurements which require two images
+    */
 
     const takePhoto = async() => {
         if (!cameraRef.current) return;

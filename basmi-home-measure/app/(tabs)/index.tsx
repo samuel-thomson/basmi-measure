@@ -4,6 +4,11 @@ import {CameraView} from "expo-camera";
 
 //npx expo start --tunnel
 
+/*
+    Home page menu to navigate to the measuring page for each BASMI measurement.
+    Links to the same page with a unique value parameter to determine the content shown and functions called.
+*/
+
 export default function Index() {
   return (
     <View style={styles.container}>

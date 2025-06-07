@@ -14,15 +14,18 @@ from mmpose.apis import MMPoseInferencer
 import cv2
 import numpy as np
 
-
+#2D calculation of distance
 def distance_between_points(point_one, point_two):
     return math.sqrt((point_one[0] - point_two[0]) ** 2 + (point_one[1] - point_two[1]) ** 2)
 
+#3D calculation of distance
 def euclidean_distance(point1, point2):
     return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2 + (point1[2] - point2[2])**2)
 
+#Combined pose estimator of best performing framework and models
 class PoseEstimator:
     def __init__(self):
+        #MediaPipe setup
         self.model_path = 'pose_landmarker_full.task'
         self.base_options = python.BaseOptions(model_asset_path=self.model_path)
         self.options = vision.PoseLandmarkerOptions(
@@ -30,19 +33,25 @@ class PoseEstimator:
             output_segmentation_masks=True)
         self.detector = vision.PoseLandmarker.create_from_options(self.options)
 
+        #MMPose with wholebody setup (2D)
         self.inferencer_2d = MMPoseInferencer('wholebody')
+        #MMPose with human3d setup (3D)
         self.inferencer_3d = MMPoseInferencer(pose3d='human3d')
 
+    #MediaPipe image inference to gain human landmarks, input: image path, output: landmarks data
     def media_pipe_inference(self, input_path):
         image = mp.Image.create_from_file(input_path)
         detection_result = self.detector.detect(image)
 
+        #Normalised landmarks: x and y normalised between 0 and 1 in reference to image width and height respectively
         pose_landmarks_list = detection_result.pose_landmarks
+        #World landmarks: point in 3D space with x,y,z in metres, with z representing the landmark depth
         pose_world_landmarks_list  = detection_result.pose_world_landmarks
 
         landmarks_data = []
         world_landmarks_data = []
 
+        #Add generated landmarks to lists
         if pose_landmarks_list:
             for idx in range(len(pose_landmarks_list)):
                 for i, lm in enumerate(pose_landmarks_list[idx]):
@@ -66,34 +75,40 @@ class PoseEstimator:
 
         return landmarks_data, world_landmarks_data
 
+    #MMPose with wholebody image inference to gain human keypoints, input: image path, output: keypoints data
     def wholebody_inference(self, input_path):
-        result_generator = self.inferencer_2d(input_path, draw_bbox=True)
+        result_generator = self.inferencer_2d(input_path, draw_bbox=True) #Draw bounding boxes to estimate wall
         result = next(result_generator)
 
-        keypoints = result['predictions'][0][0]['keypoints']
+        keypoints = result['predictions'][0][0]['keypoints'] #Extracting keypoint data
 
         return keypoints
 
+    #MMPose with human3d image inference to gain human keypoints, input: image path, output: keypoints data
     def human3d_inference(self, input_path):
-        result_generator = self.inferencer_3d(input_path, draw_bbox=True) #change to vis_out_dir='MMPose/human3d-results/'
+        result_generator = self.inferencer_3d(input_path, draw_bbox=True) #Draw bounding boxes around humans
         result = next(result_generator)
 
-        keypoints = result['predictions'][0][0]['keypoints']
+        keypoints = result['predictions'][0][0]['keypoints'] #Extracting keypoint data
         return keypoints
 
+    #Calculates the tragus (ear) to wall distance using z coordinates of the head and base of the neck keypoints
     def tragus_to_wall_left(self, input_path): #human3d
         predictions = self.human3d_inference(input_path)
         result = abs(predictions[10][2]-predictions[8][2])
 
-        return round(result * 100, 1)
+        return round(result * 100, 1) #Rounded to 1dp
 
+    #Calculates the tragus (ear) to wall distance using z coordinates of the head and base of the neck keypoints
     def tragus_to_wall_right(self, input_path): #human3d
         predictions = self.human3d_inference(input_path)
         result = abs(predictions[10][2]-predictions[8][2])
 
-        return round(result * 100, 1)
+        return round(result * 100, 1) #Rounded to 1dp
 
+    #A helper function for determining the pixel size to calibrate images
     def side_helper_calibration(self, image_shape, landmarks_data, world_landmarks_data):
+        #Calculates the pixel size of shoulder to toe distance
         shoulder = landmarks_data[11]
         toe = landmarks_data[31]
         h, w = image_shape
@@ -101,6 +116,7 @@ class PoseEstimator:
         toe_coord = [int(toe["x"] * w), int(toe["y"] * h)]
         pixel_distance = math.dist(shoulder_coord, toe_coord)
 
+        #Calculates the world size of shoulder to toe distance
         shoulder_world = world_landmarks_data[11]
         toe_world = world_landmarks_data[31]
         shoulder_point = [shoulder_world["x"], shoulder_world["y"], shoulder_world["z"]]
@@ -109,6 +125,7 @@ class PoseEstimator:
 
         return world_distance / pixel_distance
 
+    #Calculates the difference in distance between the middle finger and floor before and after side flexing on the left
     def side_flexion_left(self, before_input_path, after_input_path): #MediaPipe
         before_landmarks_data, before_world_landmarks_data = self.media_pipe_inference(before_input_path)
         after_landmarks_data, after_world_landmarks_data = self.media_pipe_inference(after_input_path)
@@ -137,6 +154,7 @@ class PoseEstimator:
 
         return abs(round(result*100, 1))
 
+    #Calculates the difference in distance between the middle finger and floor before and after side flexing on the right
     def side_flexion_right(self, before_input_path, after_input_path): #MediaPipe
         before_landmarks_data, before_world_landmarks_data = self.media_pipe_inference(before_input_path)
         after_landmarks_data, after_world_landmarks_data = self.media_pipe_inference(after_input_path)
@@ -165,12 +183,14 @@ class PoseEstimator:
 
         return abs(round(result*100, 1))
 
+    #Participants shin left estimated using MediaPipe's inference to calibrate wholebody's 2D lumbar flexion calculation
     def lumbar_helper_calibration(self, predictions, shin_length):
         model_shin = distance_between_points(predictions[14], predictions[16])
         ratio = model_shin / shin_length
 
         return ratio
 
+    #Calculates the difference in distance between the middle finger and floor before and after flexing forward
     def lumbar_flexion(self, before_input_path, after_input_path): #wholebody
         #Estimate shin length with MediaPipe
         _, world_landmark_data = self.media_pipe_inference(before_input_path)
@@ -213,6 +233,7 @@ class PoseEstimator:
 
         return abs(round(left, 1)), abs(round(right,1))
 
+    #Calculates the cervical rotation when patient rotates head as far as possible, generalised the left/right measurements
     def cervical_helper(self, before_input_path, after_input_path): #MediaPipe
         _, before_world_landmark_data = self.media_pipe_inference(before_input_path)
         _, after_world_landmark_data = self.media_pipe_inference(after_input_path)
@@ -255,14 +276,17 @@ class PoseEstimator:
 
         return abs(round(angle,1))
 
+    #Left cervical rotation measurement, using helper function
     def cervical_rotation_left(self, before_input_path, after_input_path): #MediaPipe
         result = self.cervical_helper(before_input_path, after_input_path)
         return result
 
+    #Right cervical rotation measurement, using helper function
     def cervical_rotation_right(self, before_input_path, after_input_path): #MediaPipe
         result = self.cervical_helper(before_input_path, after_input_path)
         return result
 
+    #Calculates the distance between patients ankles when legs moved apart as far as possible
     def intermalleolar_distance(self, input_path): #MediaPipe
         _, world_landmark_data = self.media_pipe_inference(input_path)
         left_ankle = world_landmark_data[29]

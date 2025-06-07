@@ -9,6 +9,7 @@ from PIL import Image
 
 from pose_estimator import PoseEstimator
 
+#FastAPI instance
 app = FastAPI()
 
 # Allow frontend to connect
@@ -20,7 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+#Instance of PoseEstimator class
 pose = PoseEstimator()
+
+#Each app.post relates to a different measurement accessed by the measuring page
 
 @app.post("/tragusleft")
 async def tragus_to_wall_left(request: Request):
@@ -247,6 +251,7 @@ async def intermalleolar_distance(request: Request):
 
     return {"status": "success", "result": result}
 
+#Entry point
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 

@@ -24,7 +24,12 @@ The application consists of three pages accessible by tabs: the home, results an
 as well as the measuring page which is accessible from the main page.
 
 The backend for this application is a FastAPI, which requires the `basmi-backend` directory and its files to run in 
-a separate project. This estimator is lifted from the development performed in _CV Analysis and Design_.
+a separate project. This estimator is lifted from the development performed in _CV Analysis_.
+
+This application achieved a mean SUS score of 84.4, compared to 55.0 for manual measurement, on a user study with 18
+participants. Additionally, the BASMI scores calculated from the applications measurements were not statistically 
+significantly different from the manual measurements taken for Intermalleolar Distance and Tragus to Wall in the user 
+study.
 
 ### Expo
 

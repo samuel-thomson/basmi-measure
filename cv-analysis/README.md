@@ -6,7 +6,7 @@ This requires MediaPipe, MMPose and mmcv to run. RTMPose3D also requires the res
 
 Please note that no images of participants have been included due to ethics, and so the evaluation section of the code will not run, but the code can be run on other images.
 
-Using the most accurate models, a general pose estimator class was then impelemented.
+Using the most accurate models, a general pose estimator class was then implemented.
 
 
 
