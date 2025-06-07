@@ -9,7 +9,7 @@ to automatically calculate the BASMI measurements shown above. Four framework an
 * MediaPipe Pose (Google, 2023)
 * MMPose (MMPose Contributors, 2020) with wholebody
 * MMPose with human3d
-* MMPose RTMPose3D (Jiang, Xie and Li, 2024).
+* MMPose RTMPose3D (Jiang, Xie and Li, 2024)
 
 These require MediaPipe, MMPose and mmcv to run. RTMPose3D also requires the respective config and checkpoint files.
 
